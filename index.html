@@ -358,11 +358,30 @@
         }
 
         async function finishQuiz() {
+            // 1. ซ่อนหน้าข้อสอบ และแสดงหน้า "ผลคะแนน" ทันทีโดยไม่ต้องรอโหลด
             document.getElementById('quiz-page').classList.add('hidden');
-            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('result-page').classList.remove('hidden');
+            
+            // อัปเดตตัวเลขคะแนนให้แสดงผลทันที
+            document.getElementById('score-display').innerText = score;
+            document.getElementById('total-display').innerText = currentQuestions.length;
+
+            // 2. แสดง Toast แจ้งเตือนเล็กๆ มุมขวาบนว่ากำลังส่งข้อมูล
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timerProgressBar: true,
+            });
+            
+            Toast.fire({
+                icon: 'info',
+                title: 'กำลังบันทึกคะแนนลงระบบ...'
+            });
 
             userData.score = score;
 
+            // 3. แอบส่งข้อมูลไปบันทึกที่ Google Sheet แบบเบื้องหลัง
             try {
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
@@ -370,45 +389,42 @@
                 });
                 const result = await response.json();
                 
-                document.getElementById('loading').classList.add('hidden');
-                
                 if(result.status === 'duplicate') {
                     Swal.fire({
                         icon: 'warning',
                         title: 'พบข้อมูลซ้ำ',
-                        text: `รหัสพนักงาน ${userData.empId} ได้ทำการสอบ ${userData.testType} ไปแล้ว ข้อมูลรอบนี้จะไม่ถูกบันทึก`,
+                        text: `รหัสพนักงาน ${userData.empId} ได้ทำการสอบ ${userData.testType} ไปแล้ว ข้อมูลรอบนี้จะไม่ถูกบันทึกซ้ำ`,
                         confirmButtonColor: '#2563eb',
                         confirmButtonText: 'รับทราบ'
-                    }).then(() => {
-                        location.reload();
                     });
                     return;
                 }
                 
-                // แสดงหน้าผลลัพธ์
-                document.getElementById('result-page').classList.remove('hidden');
-                document.getElementById('score-display').innerText = score;
-                document.getElementById('total-display').innerText = currentQuestions.length;
-                
-                // ยิงพลุฉลองถ้าได้คะแนนเต็ม
+                // 4. เมื่อ Google Sheet บันทึกเสร็จเรียบร้อย (ประมาณ 2-3 วิ) จะขึ้นสีเขียวแจ้งเตือน
+                Toast.fire({
+                    icon: 'success',
+                    title: 'บันทึกข้อมูลสำเร็จ!',
+                    timer: 3000
+                });
+
+                // ยิงพลุฉลองถ้าได้คะแนนเต็ม (หน่วงเวลาเล็กน้อยให้ Toast บันทึกสำเร็จขึ้นก่อน)
                 if (score === currentQuestions.length) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'ยอดเยี่ยมมาก!',
-                        text: 'คุณได้คะแนนเต็ม',
-                        confirmButtonColor: '#10b981',
-                        confirmButtonText: 'ตกลง'
-                    });
+                    setTimeout(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'ยอดเยี่ยมมาก!',
+                            text: 'คุณได้คะแนนเต็ม',
+                            confirmButtonColor: '#10b981',
+                            confirmButtonText: 'ตกลง'
+                        });
+                    }, 1000);
                 }
                 
             } catch (error) {
-                document.getElementById('loading').classList.add('hidden');
-                Swal.fire({
+                Toast.fire({
                     icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถบันทึกคะแนนได้ กรุณาติดต่อผู้ดูแลระบบ',
-                    confirmButtonColor: '#ef4444',
-                    confirmButtonText: 'ตกลง'
+                    title: 'บันทึกไม่สำเร็จ กรุณาแจ้งผู้ดูแลระบบ',
+                    timer: 5000
                 });
             }
         }
