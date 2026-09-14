@@ -4,76 +4,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แบบทดสอบ: Sepsis</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
         .hidden { display: none; }
+        /* ปรับแต่ง SweetAlert ให้เข้ากับฟอนต์ Prompt */
+        div:where(.swal2-container) { font-family: 'Prompt', sans-serif; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <!-- Loading Overlay -->
     <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white p-4 rounded-lg shadow-lg">กำลังประมวลผล...</div>
+        <div class="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-3"></i>
+            <span class="text-gray-700 font-medium">กำลังประมวลผล...</span>
+        </div>
     </div>
 
     <!-- หน้าลงทะเบียน -->
-    <div id="register-page" class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
-        <h2 class="text-2xl font-bold text-center text-blue-700 mb-6">แบบทดสอบ Sepsis</h2>
+    <div id="register-page" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+        <div class="text-center mb-6">
+            <div class="inline-block p-4 bg-blue-100 rounded-full mb-3">
+                <i class="fas fa-file-medical text-3xl text-blue-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800">แบบทดสอบ Sepsis</h2>
+            <p class="text-sm text-gray-500 mt-1">กรุณากรอกข้อมูลก่อนเริ่มทำแบบทดสอบ</p>
+        </div>
+
         <form id="register-form" class="space-y-4">
+            <!-- รหัสพนักงาน -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">รหัสพนักงาน (6 หลัก)</label>
-                <input type="text" id="emp-id" placeholder="ตัวอย่าง: 012345" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-blue-500 focus:border-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 mb-1">รหัสพนักงาน (6 หลัก)</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-id-badge text-gray-400"></i>
+                    </div>
+                    <input type="text" id="emp-id" placeholder="ตัวอย่าง: 012345" class="pl-10 block w-full rounded-lg border-gray-300 shadow-sm border p-2.5 focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
             </div>
+            
+            <!-- ชื่อ-นามสกุล -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">ชื่อ-นามสกุล</label>
-                <input type="text" id="emp-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-blue-500 focus:border-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-user text-gray-400"></i>
+                    </div>
+                    <input type="text" id="emp-name" placeholder="ระบุชื่อและนามสกุล" class="pl-10 block w-full rounded-lg border-gray-300 shadow-sm border p-2.5 focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
             </div>
+
+            <!-- แผนก -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">แผนก / หน่วยงาน</label>
-                <input type="text" id="emp-dept" placeholder="โปรดระบุแผนก" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-blue-500 focus:border-blue-500" required>
+                <label class="block text-sm font-medium text-gray-700 mb-1">แผนก / หน่วยงาน</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-hospital-user text-gray-400"></i>
+                    </div>
+                    <input type="text" id="emp-dept" placeholder="โปรดระบุแผนก" class="pl-10 block w-full rounded-lg border-gray-300 shadow-sm border p-2.5 focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
             </div>
+
+            <!-- ประเภทแบบทดสอบ -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">ประเภทแบบทดสอบ</label>
-                <select id="test-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-blue-500 focus:border-blue-500" required>
-                    <option value="Pretest">ก่อนอบรม (Pretest)</option>
-                    <option value="Posttest">หลังอบรม (Posttest)</option>
-                </select>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ประเภทแบบทดสอบ</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-clipboard-list text-gray-400"></i>
+                    </div>
+                    <select id="test-type" class="pl-10 block w-full rounded-lg border-gray-300 shadow-sm border p-2.5 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white" required>
+                        <option value="Pretest">ก่อนอบรม (Pretest)</option>
+                        <option value="Posttest">หลังอบรม (Posttest)</option>
+                    </select>
+                    <!-- Custom Arrow for Select -->
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                    </div>
+                </div>
             </div>
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors">
-                เริ่มทำข้อสอบ
+
+            <button type="submit" class="w-full flex justify-center items-center py-3 px-4 mt-6 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <i class="fas fa-play-circle mr-2"></i> เริ่มทำข้อสอบ
             </button>
         </form>
     </div>
 
     <!-- หน้าทำข้อสอบ -->
-    <div id="quiz-page" class="hidden bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
-        <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <span id="question-counter" class="text-gray-500 font-medium">ข้อ 1/5</span>
-            <span id="timer" class="text-red-500 font-bold bg-red-100 px-3 py-1 rounded-full">60 วิ</span>
+    <div id="quiz-page" class="hidden bg-white p-6 md:p-8 rounded-2xl shadow-xl w-full max-w-lg">
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <span id="question-counter" class="text-gray-600 font-semibold text-lg">
+                <i class="fas fa-question-circle text-blue-500 mr-1"></i> ข้อ 1/5
+            </span>
+            <span id="timer" class="flex items-center text-red-600 font-bold bg-red-50 border border-red-200 px-4 py-1.5 rounded-full shadow-sm">
+                <i class="fas fa-stopwatch mr-2 text-lg"></i> <span id="time-text">60 วิ</span>
+            </span>
         </div>
-        <h3 id="question-text" class="text-lg font-semibold text-gray-800 mb-4"></h3>
+        <h3 id="question-text" class="text-lg md:text-xl font-medium text-gray-800 mb-6 leading-relaxed"></h3>
         <div id="choices-container" class="space-y-3">
             <!-- ตัวเลือกจะถูกสร้างที่นี่ -->
         </div>
     </div>
 
     <!-- หน้าแสดงผลคะแนน -->
-    <div id="result-page" class="hidden bg-white p-6 rounded-2xl shadow-xl w-full max-w-md text-center">
-        <h2 class="text-3xl font-bold text-green-600 mb-2">เสร็จสิ้น!</h2>
-        <p class="text-gray-600 mb-6">บันทึกข้อมูลการทดสอบเรียบร้อยแล้ว</p>
-        <div class="bg-blue-50 p-6 rounded-lg mb-6">
-            <p class="text-sm text-gray-500">คะแนนของคุณ</p>
-            <p id="score-display" class="text-4xl font-bold text-blue-700 mt-2">0/5</p>
+    <div id="result-page" class="hidden bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
+        <div class="inline-block p-5 bg-green-100 rounded-full mb-4">
+            <i class="fas fa-trophy text-5xl text-green-500"></i>
         </div>
-        <button onclick="location.reload()" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 transition-colors">
-            กลับหน้าหลัก
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">เสร็จสิ้นการทดสอบ!</h2>
+        <p class="text-gray-500 mb-6">บันทึกข้อมูลการทดสอบของคุณเรียบร้อยแล้ว</p>
+        
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-6 rounded-xl mb-8">
+            <p class="text-sm font-medium text-gray-600 uppercase tracking-wider mb-1">คะแนนที่ได้</p>
+            <div class="flex justify-center items-baseline text-blue-700">
+                <span id="score-display" class="text-5xl font-extrabold">0</span>
+                <span class="text-2xl font-bold text-gray-400 mx-1">/</span>
+                <span id="total-display" class="text-2xl font-bold text-gray-400">5</span>
+            </div>
+        </div>
+        
+        <button onclick="location.reload()" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-gray-700 hover:bg-gray-800 transition-colors">
+            <i class="fas fa-home mr-2"></i> กลับหน้าหลัก
         </button>
     </div>
 
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwt4SbdflHth8PEGd8lZ6ZVlg30QJ6JcFegwOCmqTKjRdFu5SDqQsZ8JIiHfAFrktf4/exec'; // ใส่ URL จาก Google Apps Script ที่ Deploy ใหม่
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwt4SbdflHth8PEGd8lZ6ZVlg30QJ6JcFegwOCmqTKjRdFu5SDqQsZ8JIiHfAFrktf4/exec'; // ใส่ URL จาก Google Apps Script
 
         const quizData = [
             {
@@ -135,7 +199,7 @@
         let timeLeft = 60;
         let userData = {};
 
-        // โหลดข้อมูลประวัติการสอบไว้ล่วงหน้า (Background Fetch) เพื่อให้ตรวจสอบได้ทันทีเมื่อกดปุ่ม
+        // โหลดข้อมูลประวัติการสอบไว้ล่วงหน้า
         let completedTestsPromise = fetch(GAS_URL).then(res => res.json()).catch(() => []);
 
         function shuffle(array) {
@@ -150,39 +214,47 @@
 
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const empId = document.getElementById('emp-id').value;
+            const empId = document.getElementById('emp-id').value.trim();
             
             if (!/^0\d{5}$/.test(empId)) {
-                alert("กรุณาระบุรหัสพนักงานให้ถูกต้อง (ต้องเป็นตัวเลข 6 หลัก และขึ้นต้นด้วย 0)");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ข้อมูลไม่ถูกต้อง',
+                    text: 'กรุณาระบุรหัสพนักงานให้ถูกต้อง (ต้องเป็นตัวเลข 6 หลัก และขึ้นต้นด้วย 0)',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'ตกลง'
+                });
                 return;
             }
 
             userData = {
                 empId: empId,
-                name: document.getElementById('emp-name').value,
-                department: document.getElementById('emp-dept').value,
+                name: document.getElementById('emp-name').value.trim(),
+                department: document.getElementById('emp-dept').value.trim(),
                 testType: document.getElementById('test-type').value
             };
 
             document.getElementById('loading').classList.remove('hidden');
 
             try {
-                // รอข้อมูลที่โหลดไว้ล่วงหน้า (ถ้าโหลดเสร็จแล้วจะทำงานทันทีใน 0 วินาที)
                 const completedTests = await completedTestsPromise;
-                
-                // ตรวจสอบประวัติการสอบ
                 const hasTaken = completedTests.some(record => record.empId === empId && record.testType === userData.testType);
                 
                 document.getElementById('loading').classList.add('hidden');
 
                 if (hasTaken) {
-                    alert(`รหัสพนักงาน ${empId} ได้ทำการสอบ ${userData.testType} ไปแล้ว ไม่สามารถทำซ้ำได้`);
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'คุณทำแบบทดสอบไปแล้ว!',
+                        text: `รหัสพนักงาน ${empId} ได้ทำการสอบ ${userData.testType} ไปแล้ว ไม่สามารถทำซ้ำได้`,
+                        confirmButtonColor: '#2563eb',
+                        confirmButtonText: 'ตกลง'
+                    });
                     return;
                 }
 
                 startQuiz();
             } catch (error) {
-                // หากดึงประวัติไม่สำเร็จ ให้เริ่มสอบไปก่อนและเช็คซ้ำตอนบันทึกข้อมูล
                 document.getElementById('loading').classList.add('hidden');
                 startQuiz();
             }
@@ -196,16 +268,28 @@
             currentQuestionIndex = 0;
             score = 0;
             
+            // แจ้งเตือนก่อนเริ่ม
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: 'เริ่มจับเวลา!',
+                text: 'คุณมีเวลาข้อละ 60 วินาที',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+
             loadQuestion();
         }
 
         function loadQuestion() {
             clearInterval(timerInterval);
             timeLeft = 60;
-            document.getElementById('timer').innerText = `${timeLeft} วิ`;
+            document.getElementById('time-text').innerText = `${timeLeft} วิ`;
             
             const q = currentQuestions[currentQuestionIndex];
-            document.getElementById('question-counter').innerText = `ข้อ ${currentQuestionIndex + 1}/${currentQuestions.length}`;
+            document.getElementById('question-counter').innerHTML = `<i class="fas fa-question-circle text-blue-500 mr-1"></i> ข้อ ${currentQuestionIndex + 1}/${currentQuestions.length}`;
             document.getElementById('question-text').innerText = q.q;
 
             const choicesContainer = document.getElementById('choices-container');
@@ -213,19 +297,46 @@
             
             const shuffledChoices = shuffle([...q.choices]);
             
-            shuffledChoices.forEach(choice => {
+            shuffledChoices.forEach((choice, index) => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-3 rounded-lg border border-gray-300 hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200 text-gray-700";
-                btn.innerText = choice;
+                btn.className = "w-full text-left p-4 rounded-xl border-2 border-gray-100 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 text-gray-700 flex items-start group shadow-sm";
+                
+                // ใส่ตัวอักษร ก, ข, ค, ง ไว้ด้านหน้า
+                const prefix = String.fromCharCode(161 + index); // 161 คือ ก.ไก่ ในรหัส TIS-620/Unicode แบบคร่าวๆ (เราใช้การเจน A,B,C,D ก็ได้ แต่ในที่นี้จะใช้แค่ bullet สวยๆ)
+                
+                btn.innerHTML = `
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3 group-hover:border-blue-400 group-hover:bg-blue-100 transition-colors">
+                        <span class="text-sm font-bold text-gray-500 group-hover:text-blue-600">${index + 1}</span>
+                    </div>
+                    <span class="mt-1">${choice}</span>
+                `;
                 btn.onclick = () => selectAnswer(choice, q.ans);
                 choicesContainer.appendChild(btn);
             });
 
             timerInterval = setInterval(() => {
                 timeLeft--;
-                document.getElementById('timer').innerText = `${timeLeft} วิ`;
+                document.getElementById('time-text').innerText = `${timeLeft} วิ`;
+                
+                // เปลี่ยนสีเวลาเมื่อเหลือน้อยกว่า 10 วิ
+                if (timeLeft <= 10) {
+                    document.getElementById('timer').classList.add('animate-pulse', 'bg-red-100');
+                } else {
+                    document.getElementById('timer').classList.remove('animate-pulse', 'bg-red-100');
+                }
+
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
+                    // หมดเวลา เด้ง Toast เตือน
+                    Swal.fire({
+                        toast: true,
+                        position: 'top',
+                        icon: 'error',
+                        title: 'หมดเวลา!',
+                        text: 'ข้ามไปยังข้อถัดไป',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
                     nextQuestion(); 
                 }
             }, 1000);
@@ -255,23 +366,50 @@
             try {
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
-                    body: JSON.stringify(userData) // ส่งไปบันทึกโดยตรง
+                    body: JSON.stringify(userData)
                 });
                 const result = await response.json();
                 
                 document.getElementById('loading').classList.add('hidden');
                 
                 if(result.status === 'duplicate') {
-                    alert(`รหัสพนักงาน ${userData.empId} ได้ทำการสอบ ${userData.testType} ไปแล้ว ข้อมูลนี้จะไม่ถูกบันทึกซ้ำ`);
-                    location.reload();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'พบข้อมูลซ้ำ',
+                        text: `รหัสพนักงาน ${userData.empId} ได้ทำการสอบ ${userData.testType} ไปแล้ว ข้อมูลรอบนี้จะไม่ถูกบันทึก`,
+                        confirmButtonColor: '#2563eb',
+                        confirmButtonText: 'รับทราบ'
+                    }).then(() => {
+                        location.reload();
+                    });
                     return;
                 }
                 
+                // แสดงหน้าผลลัพธ์
                 document.getElementById('result-page').classList.remove('hidden');
-                document.getElementById('score-display').innerText = `${score}/${currentQuestions.length}`;
+                document.getElementById('score-display').innerText = score;
+                document.getElementById('total-display').innerText = currentQuestions.length;
+                
+                // ยิงพลุฉลองถ้าได้คะแนนเต็ม
+                if (score === currentQuestions.length) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'ยอดเยี่ยมมาก!',
+                        text: 'คุณได้คะแนนเต็ม',
+                        confirmButtonColor: '#10b981',
+                        confirmButtonText: 'ตกลง'
+                    });
+                }
+                
             } catch (error) {
                 document.getElementById('loading').classList.add('hidden');
-                alert("ไม่สามารถบันทึกคะแนนได้ กรุณาติดต่อผู้ดูแลระบบ");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถบันทึกคะแนนได้ กรุณาติดต่อผู้ดูแลระบบ',
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: 'ตกลง'
+                });
             }
         }
     </script>
