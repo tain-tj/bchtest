@@ -15,8 +15,7 @@
     
     <style>
         body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; }
-        .hidden { display: none; }
-        /* ปรับแต่ง SweetAlert ให้เข้ากับฟอนต์ Prompt */
+        .hidden { display: none !important; }
         div:where(.swal2-container) { font-family: 'Prompt', sans-serif; }
     </style>
 </head>
@@ -41,7 +40,6 @@
         </div>
 
         <form id="register-form" class="space-y-4">
-            <!-- รหัสพนักงาน -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">รหัสพนักงาน (6 หลัก)</label>
                 <div class="relative">
@@ -52,7 +50,6 @@
                 </div>
             </div>
             
-            <!-- ชื่อ-นามสกุล -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล</label>
                 <div class="relative">
@@ -63,7 +60,6 @@
                 </div>
             </div>
 
-            <!-- แผนก -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">แผนก / หน่วยงาน</label>
                 <div class="relative">
@@ -74,7 +70,6 @@
                 </div>
             </div>
 
-            <!-- ประเภทแบบทดสอบ -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">ประเภทแบบทดสอบ</label>
                 <div class="relative">
@@ -85,7 +80,6 @@
                         <option value="Pretest">ก่อนอบรม (Pretest)</option>
                         <option value="Posttest">หลังอบรม (Posttest)</option>
                     </select>
-                    <!-- Custom Arrow for Select -->
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                         <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
                     </div>
@@ -109,9 +103,14 @@
             </span>
         </div>
         <h3 id="question-text" class="text-lg md:text-xl font-medium text-gray-800 mb-6 leading-relaxed"></h3>
-        <div id="choices-container" class="space-y-3">
-            <!-- ตัวเลือกจะถูกสร้างที่นี่ -->
-        </div>
+        
+        <!-- คอนเทนเนอร์ตัวเลือก -->
+        <div id="choices-container" class="space-y-3 mb-6"></div>
+
+        <!-- ปุ่มยืนยันคำตอบ (ซ่อนไว้ก่อนจนกว่าจะเลือก) -->
+        <button id="btn-confirm" onclick="confirmAnswer()" class="hidden w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-green-600 hover:bg-green-700 transition-colors mt-4">
+            <i class="fas fa-check-circle mr-2"></i> ยืนยันคำตอบ
+        </button>
     </div>
 
     <!-- หน้าแสดงผลคะแนน -->
@@ -198,6 +197,9 @@
         let timerInterval;
         let timeLeft = 60;
         let userData = {};
+        
+        let selectedAnswer = null; // ตัวแปรเก็บคำตอบที่ผู้ใช้กดเลือก
+        let currentCorrectAnswer = null; // คำตอบที่ถูกต้องของข้อปัจจุบัน
 
         // โหลดข้อมูลประวัติการสอบไว้ล่วงหน้า
         let completedTestsPromise = fetch(GAS_URL).then(res => res.json()).catch(() => []);
@@ -221,8 +223,7 @@
                     icon: 'error',
                     title: 'ข้อมูลไม่ถูกต้อง',
                     text: 'กรุณาระบุรหัสพนักงานให้ถูกต้อง (ต้องเป็นตัวเลข 6 หลัก และขึ้นต้นด้วย 0)',
-                    confirmButtonColor: '#2563eb',
-                    confirmButtonText: 'ตกลง'
+                    confirmButtonColor: '#2563eb'
                 });
                 return;
             }
@@ -247,8 +248,7 @@
                         icon: 'warning',
                         title: 'คุณทำแบบทดสอบไปแล้ว!',
                         text: `รหัสพนักงาน ${empId} ได้ทำการสอบ ${userData.testType} ไปแล้ว ไม่สามารถทำซ้ำได้`,
-                        confirmButtonColor: '#2563eb',
-                        confirmButtonText: 'ตกลง'
+                        confirmButtonColor: '#2563eb'
                     });
                     return;
                 }
@@ -268,7 +268,6 @@
             currentQuestionIndex = 0;
             score = 0;
             
-            // แจ้งเตือนก่อนเริ่ม
             Swal.fire({
                 toast: true,
                 position: 'top-end',
@@ -286,9 +285,15 @@
         function loadQuestion() {
             clearInterval(timerInterval);
             timeLeft = 60;
+            selectedAnswer = null; // ล้างค่าคำตอบที่เลือกเมื่อขึ้นข้อใหม่
+            
+            // ซ่อนปุ่มยืนยัน
+            document.getElementById('btn-confirm').classList.add('hidden');
             document.getElementById('time-text').innerText = `${timeLeft} วิ`;
             
             const q = currentQuestions[currentQuestionIndex];
+            currentCorrectAnswer = q.ans; // เก็บคำตอบที่ถูกต้องไว้ตรวจสอบ
+            
             document.getElementById('question-counter').innerHTML = `<i class="fas fa-question-circle text-blue-500 mr-1"></i> ข้อ ${currentQuestionIndex + 1}/${currentQuestions.length}`;
             document.getElementById('question-text').innerText = q.q;
 
@@ -299,18 +304,19 @@
             
             shuffledChoices.forEach((choice, index) => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-4 rounded-xl border-2 border-gray-100 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 text-gray-700 flex items-start group shadow-sm";
-                
-                // ใส่ตัวอักษร ก, ข, ค, ง ไว้ด้านหน้า
-                const prefix = String.fromCharCode(161 + index); // 161 คือ ก.ไก่ ในรหัส TIS-620/Unicode แบบคร่าวๆ (เราใช้การเจน A,B,C,D ก็ได้ แต่ในที่นี้จะใช้แค่ bullet สวยๆ)
+                btn.id = `choice-btn-${index}`;
+                // ใช้ class 'choice-btn' สำหรับการอ้างอิงตอนกดเลือก
+                btn.className = "choice-btn w-full text-left p-4 rounded-xl border-2 border-gray-100 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 text-gray-700 flex items-start group shadow-sm";
                 
                 btn.innerHTML = `
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3 group-hover:border-blue-400 group-hover:bg-blue-100 transition-colors">
-                        <span class="text-sm font-bold text-gray-500 group-hover:text-blue-600">${index + 1}</span>
+                    <div class="choice-icon flex-shrink-0 w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center mr-3 group-hover:border-blue-400 group-hover:bg-blue-100 transition-colors">
+                        <span class="choice-number text-sm font-bold text-gray-500 group-hover:text-blue-600">${index + 1}</span>
                     </div>
                     <span class="mt-1">${choice}</span>
                 `;
-                btn.onclick = () => selectAnswer(choice, q.ans);
+                
+                // เปลี่ยนฟังก์ชันเมื่อกดตัวเลือกให้เป็นฟังก์ชัน highlight แทน
+                btn.onclick = () => selectChoice(choice, btn.id);
                 choicesContainer.appendChild(btn);
             });
 
@@ -318,7 +324,6 @@
                 timeLeft--;
                 document.getElementById('time-text').innerText = `${timeLeft} วิ`;
                 
-                // เปลี่ยนสีเวลาเมื่อเหลือน้อยกว่า 10 วิ
                 if (timeLeft <= 10) {
                     document.getElementById('timer').classList.add('animate-pulse', 'bg-red-100');
                 } else {
@@ -327,7 +332,6 @@
 
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    // หมดเวลา เด้ง Toast เตือน
                     Swal.fire({
                         toast: true,
                         position: 'top',
@@ -342,9 +346,51 @@
             }, 1000);
         }
 
-        function selectAnswer(selected, correct) {
+        // ฟังก์ชันเมื่อกดเลือกตัวเลือก (แค่ไฮไลต์ ยังไม่ส่งคำตอบ)
+        function selectChoice(choice, btnId) {
+            selectedAnswer = choice;
+            
+            // ล้างสไตล์ "เลือกแล้ว" ออกจากทุกปุ่มก่อน
+            document.querySelectorAll('.choice-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'bg-blue-50');
+                btn.classList.add('border-gray-100', 'bg-gray-50');
+                
+                const icon = btn.querySelector('.choice-icon');
+                icon.classList.remove('bg-blue-500', 'border-blue-500');
+                icon.classList.add('bg-white', 'border-gray-300');
+                
+                const number = btn.querySelector('.choice-number');
+                number.classList.remove('text-white');
+                number.classList.add('text-gray-500');
+            });
+
+            // เพิ่มสไตล์ "เลือกแล้ว" ให้กับปุ่มที่เพิ่งกด
+            const activeBtn = document.getElementById(btnId);
+            activeBtn.classList.remove('border-gray-100', 'bg-gray-50');
+            activeBtn.classList.add('border-blue-500', 'bg-blue-50');
+            
+            const activeIcon = activeBtn.querySelector('.choice-icon');
+            activeIcon.classList.remove('bg-white', 'border-gray-300');
+            activeIcon.classList.add('bg-blue-500', 'border-blue-500');
+            
+            const activeNumber = activeBtn.querySelector('.choice-number');
+            activeNumber.classList.remove('text-gray-500');
+            activeNumber.classList.add('text-white');
+            
+            // แสดงปุ่ม "ยืนยันคำตอบ"
+            document.getElementById('btn-confirm').classList.remove('hidden');
+        }
+
+        // ฟังก์ชันเมื่อกดยืนยันคำตอบ
+        function confirmAnswer() {
+            if (!selectedAnswer) return; // ป้องกันกรณียังไม่เลือก
+            
             clearInterval(timerInterval);
-            if (selected === correct) score++;
+            
+            // ตรวจสอบคำตอบ
+            if (selectedAnswer === currentCorrectAnswer) {
+                score++;
+            }
             nextQuestion();
         }
 
@@ -358,15 +404,12 @@
         }
 
         async function finishQuiz() {
-            // 1. ซ่อนหน้าข้อสอบ และแสดงหน้า "ผลคะแนน" ทันทีโดยไม่ต้องรอโหลด
             document.getElementById('quiz-page').classList.add('hidden');
             document.getElementById('result-page').classList.remove('hidden');
             
-            // อัปเดตตัวเลขคะแนนให้แสดงผลทันที
             document.getElementById('score-display').innerText = score;
             document.getElementById('total-display').innerText = currentQuestions.length;
 
-            // 2. แสดง Toast แจ้งเตือนเล็กๆ มุมขวาบนว่ากำลังส่งข้อมูล
             const Toast = Swal.mixin({
                 toast: true,
                 position: 'top-end',
@@ -381,7 +424,6 @@
 
             userData.score = score;
 
-            // 3. แอบส่งข้อมูลไปบันทึกที่ Google Sheet แบบเบื้องหลัง
             try {
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
@@ -394,20 +436,17 @@
                         icon: 'warning',
                         title: 'พบข้อมูลซ้ำ',
                         text: `รหัสพนักงาน ${userData.empId} ได้ทำการสอบ ${userData.testType} ไปแล้ว ข้อมูลรอบนี้จะไม่ถูกบันทึกซ้ำ`,
-                        confirmButtonColor: '#2563eb',
-                        confirmButtonText: 'รับทราบ'
+                        confirmButtonColor: '#2563eb'
                     });
                     return;
                 }
                 
-                // 4. เมื่อ Google Sheet บันทึกเสร็จเรียบร้อย (ประมาณ 2-3 วิ) จะขึ้นสีเขียวแจ้งเตือน
                 Toast.fire({
                     icon: 'success',
                     title: 'บันทึกข้อมูลสำเร็จ!',
                     timer: 3000
                 });
 
-                // ยิงพลุฉลองถ้าได้คะแนนเต็ม (หน่วงเวลาเล็กน้อยให้ Toast บันทึกสำเร็จขึ้นก่อน)
                 if (score === currentQuestions.length) {
                     setTimeout(() => {
                         Swal.fire({
